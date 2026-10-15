@@ -1,13 +1,28 @@
 # RunPad Markdown 0.3.5
 
-An Obsidian plugin that opens `.rpad` files in the built-in Markdown view.
+View your [RunPad](https://github.com/campforge/run-pad) scripts in Obsidian. The plugin opens
+`.rpad` files in Obsidian's own Markdown editor: the notes read as a normal note, the code shows
+as a C# or Visual Basic block, and the parts RunPad needs — the YAML header and the run block's
+fences — are protected from accidental edits.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
+  <img alt="A RunPad script open in Obsidian: a collapsed Properties section, the title and notes as Markdown, and the C# code block" src="docs/screenshot-light.png">
+</picture>
+
+The user guide has a page about it:
+[View your scripts in Obsidian](https://campforge.github.io/run-pad-docs/obsidian/).
 
 ## Installation / update
 
-1. Copy **main.js, manifest.json and styles.css** into
-   `<vault>/.obsidian/plugins/runpad-markdown/`, replacing any previous versions.
-2. Restart Obsidian, or disable and re-enable RunPad Markdown in Community plugins.
-3. If needed, enable Files and links → Detect all file extensions.
+1. Download **main.js, manifest.json and styles.css** from the
+   [latest release](https://github.com/campforge/obsidian-rpad/releases/latest).
+2. Copy them into `<vault>/.obsidian/plugins/runpad-markdown/`, replacing any previous
+   versions. To browse your RunPad scripts, open the **RunPad Queries** folder in your
+   Documents folder as the vault.
+3. Restart Obsidian, or disable and re-enable RunPad Markdown in
+   Settings → Community plugins (turn off Restricted mode first if it is on).
+4. If needed, enable Files and links → Detect all file extensions.
 
 Requires Obsidian 1.8.7+. No build step or dependency installation is needed.
 
