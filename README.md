@@ -124,7 +124,17 @@ with no build step for users. Rebuild and commit it together with any change in 
 1. Change `version` (and `minAppVersion`, if needed) in `manifest.json`. It is the single source
    of truth; `build.cjs` no longer overwrites it.
 2. Run `npm run build && npm test` and commit `main.js`, `manifest.json` and `versions.json`.
-3. Attach `main.js`, `manifest.json` and `styles.css` to a GitHub release tagged with the version.
+3. Push a tag equal to the version, without a `v` prefix (Obsidian requires this):
+   `git tag 0.3.5 && git push origin main 0.3.5`.
+   The **Release** workflow checks that the tag matches `manifest.json` and `versions.json`,
+   rebuilds and tests, and publishes a GitHub release with `main.js`, `manifest.json`
+   and `styles.css` attached.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs `npm run check` on every push to `main` and on pull requests:
+all tests, plus a check that the committed `main.js` matches a fresh build.
+`.github/workflows/release.yml` runs on version tags, as described above.
 
 ### Licenses
 
