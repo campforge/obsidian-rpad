@@ -2,6 +2,7 @@
     "name": "obsidian-rpad",
     "private": true,
     "description": "RunPad Markdown: Obsidian plugin for .rpad files. Version lives in manifest.json.",
+    "license": "MIT",
     "scripts": {
         "build": "node build.cjs",
         "test": "node --test policy.test.cjs bundle.test.cjs",

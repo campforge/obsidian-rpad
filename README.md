@@ -138,6 +138,9 @@ all tests, plus a check that the committed `main.js` matches a fresh build.
 
 ### Licenses
 
+RunPad Markdown is released under the [MIT License](LICENSE).
+
 The CommonMark parser (commonmark 0.31.2) is vendored in `src/vendor/` with its license.
 `commonmark-LICENSE.txt` in the repository root is a deliberate copy, because the parser
-ships inside `main.js`.
+ships inside `main.js` and its license notices (BSD-2-Clause for commonmark.js, MIT for the bundled
+entity and mdurl code) have to travel with it.
