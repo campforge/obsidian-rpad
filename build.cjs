@@ -20,7 +20,22 @@ policy = replaceOnce(policy, 'require("./vendor/commonmark.js")',
     'src/policy.cjs');
 policy = replaceOnce(policy, 'module.exports = { inspect, canChange, fenceTextRanges, sections, documentationCodeBlocks };',
     'return { inspect, canChange, fenceTextRanges, sections, documentationCodeBlocks };', 'src/policy.cjs');
-const plugin = replaceOnce(read('src/plugin.js'), 'POLICY_IMPLEMENTATION', '(() => {\n' + policy + '\n})()', 'src/plugin.js');
+// Locales: every src/locales/<language>.json is embedded; en.json is the required reference.
+const localesDir = path.join(dir, 'src/locales');
+const locales = {};
+for (const file of fs.readdirSync(localesDir).filter(name => name.endsWith('.json')).sort()) {
+    try {
+        locales[path.basename(file, '.json')] = JSON.parse(fs.readFileSync(path.join(localesDir, file), 'utf8'));
+    } catch (error) {
+        throw new Error(`build: src/locales/${file} is not valid JSON: ${error.message}`);
+    }
+}
+if (!locales.en) throw new Error('build: src/locales/en.json is required');
+const i18n = replaceOnce(read('src/i18n.js'), 'LOCALES_IMPLEMENTATION', JSON.stringify(locales, null, 4), 'src/i18n.js');
+const asModule = source => '(() => { const module = { exports: {} }; const exports = module.exports;\n' + source + '\nreturn module.exports; })()';
+
+let plugin = replaceOnce(read('src/plugin.js'), 'POLICY_IMPLEMENTATION', '(() => {\n' + policy + '\n})()', 'src/plugin.js');
+plugin = replaceOnce(plugin, 'I18N_IMPLEMENTATION', asModule(i18n), 'src/plugin.js');
 fs.writeFileSync(path.join(dir, 'main.js'), plugin);
 
 const manifest = JSON.parse(read('manifest.json'));

@@ -32,21 +32,29 @@ function loadBundle({ i18next, getLanguage, language } = {}) {
  return module.exports.localize;
 }
 
-test('Properties heading comes from Obsidian translations, with English fallback', () => {
- const i18next = { exists: key => key === 'properties.label-heading', t: () => 'Свойства' };
- assert.equal(loadBundle({ i18next })('properties'), 'Свойства');
- assert.equal(loadBundle()('properties'), 'Properties');
+test('Properties heading comes from Obsidian translations, then from our locales', () => {
+ const i18next = { exists: key => key === 'properties.label-heading', t: () => 'Eigenschaften' };
+ assert.equal(loadBundle({ i18next, getLanguage: () => 'de' })('properties.heading'), 'Eigenschaften');
+ // No i18next (or it throws): our own file for the app language, then English.
+ assert.equal(loadBundle({ getLanguage: () => 'ru' })('properties.heading'), 'Свойства');
+ assert.equal(loadBundle()('properties.heading'), 'Properties');
  const broken = { exists: () => { throw new Error('boom'); } };
- assert.equal(loadBundle({ i18next: broken })('properties'), 'Properties');
+ assert.equal(loadBundle({ i18next: broken, getLanguage: () => 'ru' })('properties.heading'), 'Свойства');
 });
 
 test('plugin strings follow the Obsidian language, defaulting to English', () => {
- assert.equal(loadBundle({ getLanguage: () => 'ru' })('title'), 'Название');
- assert.equal(loadBundle({ getLanguage: () => 'en-GB' })('title'), 'Title');
- assert.equal(loadBundle({ getLanguage: () => 'pt-BR' })('description'), 'Description — Markdown, lists, links');
+ assert.equal(loadBundle({ getLanguage: () => 'ru' })('placeholder.title'), 'Название');
+ assert.equal(loadBundle({ getLanguage: () => 'en-GB' })('placeholder.title'), 'Title');
+ assert.equal(loadBundle({ getLanguage: () => 'pt-BR' })('placeholder.description'), 'Description — Markdown, lists, links');
  // Obsidian before 1.8.7 has no getLanguage(); the language is in localStorage.
- assert.equal(loadBundle({ language: 'ru' })('documentation'), 'Дополнительная документация');
- assert.equal(loadBundle()('invalidStructure'), 'The .rpad structure was not recognized. Editing is locked.');
+ assert.equal(loadBundle({ language: 'ru' })('placeholder.documentation'), 'Дополнительная документация');
+ assert.equal(loadBundle()('missing.key'), 'missing.key');
+});
+
+test('placeholders are interpolated', () => {
+ const t = loadBundle({ getLanguage: () => 'ru' });
+ assert.equal(t('properties.aria-label', { heading: 'Свойства', readOnly: 'только чтение' }), 'RunPad: Свойства, только чтение');
+ assert.equal(t('properties.aria-label', { heading: 'X' }), 'RunPad: X, {{readOnly}}');
 });
 
 test('manifest.json and versions.json agree', () => {

@@ -1,0 +1,9 @@
+{
+    "properties.heading": "Свойства",
+    "properties.read-only": "только чтение",
+    "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+    "placeholder.title": "Название",
+    "placeholder.description": "Описание — Markdown, списки, ссылки",
+    "placeholder.documentation": "Дополнительная документация",
+    "notice.invalid-structure": "Структура .rpad не распознана. Редактирование защищено."
+}

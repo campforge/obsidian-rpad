@@ -51,11 +51,24 @@ modify the file. Remote sync changes are not rolled back. Regular `.md` files ar
 
 ## Interface language
 
-Text that also exists in Obsidian (the Properties heading) comes from Obsidian's translations.
-RunPad's own placeholders and messages (title, description, additional documentation,
-the "structure not recognized" notice) are translated into English and Russian and follow
-the language chosen in Obsidian → Settings → General → Language; other languages
-fall back to English. To add a language, add a table to `STRINGS` in `src/plugin.js`.
+Interface strings are translated with per-language files in `src/locales/`
+(`en.json` is the reference and the fallback; `ru.json` is included). The language follows
+Obsidian → Settings → General → Language; an unknown language falls back to English.
+The Properties heading is first taken from Obsidian's own translation
+(`properties.label-heading`), so it matches the native Properties block in every app
+language, and only then from our locale files.
+
+To add a language:
+
+1. Copy `src/locales/en.json` to `src/locales/<code>.json`, using the code Obsidian uses
+   (`de`, `pt-BR`, `zh-TW`, … — see
+   [obsidian-translations](https://github.com/obsidianmd/obsidian-translations#existing-languages)).
+2. Translate the values; keep the keys and `{{placeholders}}` unchanged.
+3. Run `npm run build && npm test`. `i18n.test.cjs` fails if a key is missing, extra
+   or empty, or a placeholder differs from `en.json`.
+
+In code, use `t("placeholder.title")` or `t("properties.aria-label", { heading, readOnly })`
+from `src/i18n.js`; every key used in `src/plugin.js` must exist in `en.json`.
 
 ## Checks
 
@@ -122,8 +135,8 @@ Requires Node.js 18+. There are no npm dependencies; `package.json` only holds s
 
 | Command | What it does |
 | --- | --- |
-| `npm run build` (`node build.cjs`) | Bundles `src/plugin.js`, `src/policy.cjs` and `src/vendor/commonmark.js` into `main.js` and adds the current version to `versions.json`. Fails loudly if an expected placeholder is missing from the sources. |
-| `npm test` | Runs `policy.test.cjs` and `bundle.test.cjs`. |
+| `npm run build` (`node build.cjs`) | Bundles `src/plugin.js`, `src/policy.cjs`, `src/i18n.js` with `src/locales/*.json` and `src/vendor/commonmark.js` into `main.js` and adds the current version to `versions.json`. Fails loudly if an expected placeholder is missing from the sources. |
+| `npm test` | Runs `policy.test.cjs`, `bundle.test.cjs` and `i18n.test.cjs`. |
 | `npm run check` | Build, test, then fail if `main.js` or `versions.json` differ from what is committed (i.e. someone forgot to rebuild). |
 
 `main.js` is a build output, but it is committed on purpose: installation is "copy three files",
