@@ -7,7 +7,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 test('main.js loads standalone and exports the plugin class', () => {
- const code = fs.readFileSync(path.join(__dirname, 'main.js'), 'utf8');
+ const code = fs.readFileSync(path.join(__dirname, 'dist', 'main.js'), 'utf8');
  assert.doesNotMatch(code, /require\("\.\/vendor/);
  assert.doesNotMatch(code, /POLICY_IMPLEMENTATION/);
  class Plugin {}
@@ -15,19 +15,19 @@ test('main.js loads standalone and exports the plugin class', () => {
   '@codemirror/state': {}, '@codemirror/view': { WidgetType: class {} } };
  const module = { exports: {} };
  const req = name => { if (!(name in stubs)) throw new Error('unexpected require ' + name); return stubs[name]; };
- vm.runInNewContext(code, { module, exports: module.exports, require: req, queueMicrotask }, { filename: 'main.js' });
+ vm.runInNewContext(code, { module, exports: module.exports, require: req, queueMicrotask }, { filename: 'dist/main.js' });
  assert.equal(typeof module.exports, 'function');
  assert.ok(module.exports.prototype instanceof Plugin);
 });
 
 function loadBundle(language = 'en') {
- const code = fs.readFileSync(path.join(__dirname, 'main.js'), 'utf8');
+ const code = fs.readFileSync(path.join(__dirname, 'dist', 'main.js'), 'utf8');
  const obsidian = { Plugin: class {}, MarkdownView: class {}, editorInfoField: {}, parseYaml: () => ({}),
   getLanguage: () => language };
  const stubs = { obsidian, '@codemirror/state': {}, '@codemirror/view': { WidgetType: class {} } };
  const module = { exports: {} };
  vm.runInNewContext(code, { module, exports: module.exports, require: name => stubs[name], queueMicrotask },
-  { filename: 'main.js' });
+  { filename: 'dist/main.js' });
  return module.exports.localize;
 }
 
@@ -58,4 +58,31 @@ test('manifest.json and versions.json agree', () => {
  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'manifest.json'), 'utf8'));
  const versions = JSON.parse(fs.readFileSync(path.join(__dirname, 'versions.json'), 'utf8'));
  assert.equal(versions[manifest.version], manifest.minAppVersion);
+});
+
+test('package.cjs builds an installable, reproducible archive from dist/', () => {
+ const { execFileSync } = require('node:child_process');
+ const zlib = require('node:zlib');
+ const dist = path.join(__dirname, 'dist');
+ const archive = path.join(dist, 'runpad-markdown.zip');
+ execFileSync(process.execPath, [path.join(__dirname, 'package.cjs')]);
+ const zip = fs.readFileSync(archive);
+ // Read the central directory and unpack every entry with zlib.
+ const end = zip.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+ const count = zip.readUInt16LE(end + 10);
+ let at = zip.readUInt32LE(end + 16);
+ const files = {};
+ for (let i = 0; i < count; i++) {
+  const nameLength = zip.readUInt16LE(at + 28), size = zip.readUInt32LE(at + 20), local = zip.readUInt32LE(at + 42);
+  const name = zip.toString('utf8', at + 46, at + 46 + nameLength);
+  const dataStart = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28);
+  files[name] = zlib.inflateRawSync(zip.subarray(dataStart, dataStart + size));
+  at += 46 + nameLength + zip.readUInt16LE(at + 30) + zip.readUInt16LE(at + 32);
+ }
+ assert.deepEqual(Object.keys(files).sort(),
+  ['runpad-markdown/main.js', 'runpad-markdown/manifest.json', 'runpad-markdown/styles.css']);
+ for (const [name, data] of Object.entries(files))
+  assert.ok(data.equals(fs.readFileSync(path.join(dist, path.basename(name)))), name);
+ execFileSync(process.execPath, [path.join(__dirname, 'package.cjs')]);
+ assert.ok(fs.readFileSync(archive).equals(zip), 'same input gives a byte-identical archive');
 });

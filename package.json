@@ -5,8 +5,9 @@
     "license": "MIT",
     "scripts": {
         "build": "node build.cjs",
-        "test": "node --test policy.test.cjs bundle.test.cjs i18n.test.cjs",
-        "check": "node build.cjs && node --test policy.test.cjs bundle.test.cjs i18n.test.cjs && git diff --exit-code -- main.js versions.json"
+        "package": "node build.cjs && node package.cjs",
+        "test": "node build.cjs && node --test policy.test.cjs bundle.test.cjs i18n.test.cjs",
+        "check": "node build.cjs && node package.cjs && node --test policy.test.cjs bundle.test.cjs i18n.test.cjs && git diff --exit-code -- versions.json"
     },
     "engines": {
         "node": ">=18"

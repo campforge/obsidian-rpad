@@ -15,11 +15,13 @@ The user guide has a page about it:
 
 ## Installation / update
 
-1. Download **main.js, manifest.json and styles.css** from the
-   [latest release](https://github.com/campforge/obsidian-rpad/releases/latest).
-2. Copy them into `<vault>/.obsidian/plugins/runpad-markdown/`, replacing any previous
-   versions. To browse your RunPad scripts, open the **RunPad Queries** folder in your
-   Documents folder as the vault.
+1. Download [**runpad-markdown.zip**](https://github.com/campforge/obsidian-rpad/releases/latest/download/runpad-markdown.zip)
+   from the [latest release](https://github.com/campforge/obsidian-rpad/releases/latest).
+2. Unpack it into `<vault>/.obsidian/plugins/`, so that you get
+   `<vault>/.obsidian/plugins/runpad-markdown/` with `main.js`, `manifest.json` and
+   `styles.css` inside; replace an older copy when updating. (Each release also has the three
+   files separately.) To browse your RunPad scripts, open the **RunPad Queries** folder in
+   your Documents folder as the vault.
 3. Restart Obsidian, or disable and re-enable RunPad Markdown in
    Settings → Community plugins (turn off Restricted mode first if it is on).
 4. If needed, enable Files and links → Detect all file extensions.
@@ -94,7 +96,7 @@ from `src/i18n.js`; every key used in `src/plugin.js` must exist in `en.json`.
 20 automated policy tests: title/documentation/code, properties/delimiters,
 deletion across delimiters, inserting a second/premature block, CRLF and VB,
 broken structure and batched changes; plus bundle tests that load the built
-`main.js` standalone, check the interface language selection and that `manifest.json`
+`dist/main.js` standalone, unpack and compare the release archive, check the interface language selection and that `manifest.json`
 and `versions.json` agree.
 The updated version has not yet been tested in a live Obsidian: Source/Live
 Preview, Properties display, pasting, undo/redo and saving need to be checked. Version 0.1.0 was
@@ -167,28 +169,31 @@ Requires Node.js 18+. There are no npm dependencies; `package.json` only holds s
 
 | Command | What it does |
 | --- | --- |
-| `npm run build` (`node build.cjs`) | Bundles `src/plugin.js`, `src/policy.cjs`, `src/i18n.js` with `src/locales/*.json` and `src/vendor/commonmark.js` into `main.js` and adds the current version to `versions.json`. Fails loudly if an expected placeholder is missing from the sources. |
-| `npm test` | Runs `policy.test.cjs`, `bundle.test.cjs` and `i18n.test.cjs`. |
-| `npm run check` | Build, test, then fail if `main.js` or `versions.json` differ from what is committed (i.e. someone forgot to rebuild). |
+| `npm run build` (`node build.cjs`) | Writes the plugin to `dist/`: `main.js` (bundles `src/plugin.js`, `src/policy.cjs`, `src/i18n.js` with `src/locales/*.json` and `src/vendor/commonmark.js`), `manifest.json` and `styles.css` (from `src/styles.css`). Adds the current version to `versions.json`. Fails loudly if an expected placeholder is missing from the sources. |
+| `npm run package` | Build, then pack `dist/runpad-markdown.zip` with a `runpad-markdown/` folder inside, ready to unpack into `<vault>/.obsidian/plugins/`. The archive is reproducible: the same sources give the same bytes. |
+| `npm test` | Build, then run `policy.test.cjs`, `bundle.test.cjs` and `i18n.test.cjs`. |
+| `npm run check` | Build, package and test, then fail if `versions.json` is not committed up to date. This is what CI runs. |
 
-`main.js` is a build output, but it is committed on purpose: installation is "copy three files",
-with no build step for users. Rebuild and commit it together with any change in `src/`.
+`dist/` is not committed. To try a change in a vault, run `npm run build` and copy or symlink
+`dist/` as `<vault>/.obsidian/plugins/runpad-markdown`. `manifest.json` stays in the repository
+root because Obsidian's plugin directory reads the latest version from there.
 
 ### Releasing a new version
 
 1. Change `version` (and `minAppVersion`, if needed) in `manifest.json`. It is the single source
    of truth; `build.cjs` no longer overwrites it.
-2. Run `npm run build && npm test` and commit `main.js`, `manifest.json` and `versions.json`.
+2. Run `npm test` and commit `manifest.json` and `versions.json`.
 3. Push a tag equal to the version, without a `v` prefix (Obsidian requires this):
    `git tag 0.3.5 && git push origin main 0.3.5`.
    The **Release** workflow checks that the tag matches `manifest.json` and `versions.json`,
-   rebuilds and tests, and publishes a GitHub release with `main.js`, `manifest.json`
-   and `styles.css` attached.
+   builds, packages and tests, and publishes a GitHub release with `runpad-markdown.zip`
+   and, separately, `main.js`, `manifest.json` and `styles.css` (the files Obsidian's plugin
+   directory and tools like BRAT download).
 
 ### Continuous integration
 
-`.github/workflows/ci.yml` runs `npm run check` on every push to `main` and on pull requests:
-all tests, plus a check that the committed `main.js` matches a fresh build.
+`.github/workflows/ci.yml` runs `npm run check` on every push to `main` and on pull requests
+and keeps the built `runpad-markdown.zip` as a downloadable artifact of the run.
 `.github/workflows/release.yml` runs on version tags, as described above.
 
 ### Licenses

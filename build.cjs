@@ -1,5 +1,7 @@
-// Bundles src/ into main.js (no dependencies) and syncs versions.json with manifest.json.
-// manifest.json is the single source of truth for the plugin version and minAppVersion.
+// Builds the plugin into dist/: main.js (src/ bundled, no dependencies), manifest.json and
+// styles.css, i.e. exactly the files Obsidian loads. Also syncs versions.json with manifest.json,
+// which is the single source of truth for the plugin version and minAppVersion and stays in the
+// repository root because Obsidian's plugin directory reads it from there.
 const fs = require('node:fs');
 const path = require('node:path');
 const dir = __dirname;
@@ -36,8 +38,6 @@ const asModule = source => '(() => { const module = { exports: {} }; const expor
 
 let plugin = replaceOnce(read('src/plugin.js'), 'POLICY_IMPLEMENTATION', '(() => {\n' + policy + '\n})()', 'src/plugin.js');
 plugin = replaceOnce(plugin, 'I18N_IMPLEMENTATION', asModule(i18n), 'src/plugin.js');
-fs.writeFileSync(path.join(dir, 'main.js'), plugin);
-
 const manifest = JSON.parse(read('manifest.json'));
 if (!/^\d+\.\d+\.\d+$/.test(manifest.version || '')) throw new Error('build: manifest.json has no valid "version"');
 if (!manifest.minAppVersion) throw new Error('build: manifest.json has no "minAppVersion"');
@@ -47,4 +47,10 @@ if (versions[manifest.version] !== manifest.minAppVersion) {
     versions[manifest.version] = manifest.minAppVersion;
     fs.writeFileSync(versionsFile, JSON.stringify(versions, null, 4) + '\n');
 }
-console.log(`Built main.js for ${manifest.name} ${manifest.version} (Obsidian ${manifest.minAppVersion}+)`);
+const dist = path.join(dir, 'dist');
+fs.rmSync(dist, { recursive: true, force: true });
+fs.mkdirSync(dist);
+fs.writeFileSync(path.join(dist, 'main.js'), plugin);
+fs.copyFileSync(path.join(dir, 'manifest.json'), path.join(dist, 'manifest.json'));
+fs.copyFileSync(path.join(dir, 'src/styles.css'), path.join(dist, 'styles.css'));
+console.log(`Built dist/ for ${manifest.name} ${manifest.version} (Obsidian ${manifest.minAppVersion}+)`);

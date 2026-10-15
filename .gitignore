@@ -1,6 +1,9 @@
 # macOS
 .DS_Store
 
+# Build output (npm run build / npm run package)
+dist/
+
 # Node
 node_modules/
 npm-debug.log*

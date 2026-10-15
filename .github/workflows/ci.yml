@@ -19,7 +19,14 @@ jobs:
         with:
           node-version: 22
 
-      # Rebuilds main.js and versions.json, runs all tests, and fails if the committed
-      # bundle is stale (someone changed src/ without running `npm run build`).
-      - name: Build, test and check bundle is up to date
+      # Builds dist/ and the installable archive, runs all tests, and fails if versions.json
+      # is out of date with manifest.json (run `npm run build` and commit it).
+      - name: Build, package and test
         run: npm run check
+
+      # Lets you download a build of any commit from the run's summary page.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runpad-markdown
+          path: dist/runpad-markdown.zip
+          if-no-files-found: error
