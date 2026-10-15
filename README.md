@@ -33,7 +33,8 @@ the delimiters are not hidden, so the problem stays visible.
 - Adding a second run block or closing the first one early.
 
 Obsidian's built-in editable Properties form is replaced with a "name — value" table
-under the **Свойства** (Properties) heading. The table is read-only; values can be selected
+under a **Properties** heading. The heading is taken from Obsidian's own translation
+(`properties.label-heading`), so it matches the app language; English is the fallback. The table is read-only; values can be selected
 and copied. The section is collapsed by default and expands on click or via the keyboard.
 Its state is kept while editing the current tab; when another file is opened,
 the section is collapsed again. Pop-up notices about forbidden edits have been removed:
@@ -48,12 +49,21 @@ This protects against accidental edits in the plugin's editor; it is not file ac
 other plugins, commands writing directly through the Vault API, and external programs can
 modify the file. Remote sync changes are not rolled back. Regular `.md` files are not affected.
 
+## Interface language
+
+Text that also exists in Obsidian (the Properties heading) comes from Obsidian's translations.
+RunPad's own placeholders and messages (title, description, additional documentation,
+the "structure not recognized" notice) are translated into English and Russian and follow
+the language chosen in Obsidian → Settings → General → Language; other languages
+fall back to English. To add a language, add a table to `STRINGS` in `src/plugin.js`.
+
 ## Checks
 
 20 automated policy tests: title/documentation/code, properties/delimiters,
 deletion across delimiters, inserting a second/premature block, CRLF and VB,
-broken structure and batched changes; plus bundle smoke tests that load the built
-`main.js` standalone and check that `manifest.json` and `versions.json` agree.
+broken structure and batched changes; plus bundle tests that load the built
+`main.js` standalone, check the interface language selection and that `manifest.json`
+and `versions.json` agree.
 The updated version has not yet been tested in a live Obsidian: Source/Live
 Preview, Properties display, pasting, undo/redo and saving need to be checked. Version 0.1.0 was
 previously tested by the user.

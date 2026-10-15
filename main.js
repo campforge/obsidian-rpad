@@ -1,5 +1,6 @@
 "use strict";
-const { Plugin, MarkdownView, editorInfoField, parseYaml } = require("obsidian");
+const obsidian = require("obsidian");
+const { Plugin, MarkdownView, editorInfoField, parseYaml } = obsidian;
 const { EditorState, StateField, Transaction } = require("@codemirror/state");
 const { Decoration, EditorView, WidgetType } = require("@codemirror/view");
 const policy = (() => {
@@ -118,7 +119,50 @@ return { inspect, canChange, fenceTextRanges, sections, documentationCodeBlocks 
 
 })();
 
-module.exports = class RunPadMarkdown extends Plugin {
+// Strings that exist in Obsidian itself are taken from Obsidian's own translations
+// (i18next, keys from github.com/obsidianmd/obsidian-translations), so they always match
+// the app UI. i18next is a runtime global, not a public API, hence the English fallback.
+const OBSIDIAN_KEYS = { properties: ["properties.label-heading", "Properties"] };
+// Strings specific to RunPad have no Obsidian equivalent; pick them by the app language.
+const STRINGS = {
+    en: {
+        title: "Title",
+        description: "Description — Markdown, lists, links",
+        documentation: "Additional documentation",
+        readOnly: "read-only",
+        invalidStructure: "The .rpad structure was not recognized. Editing is locked."
+    },
+    ru: {
+        title: "Название",
+        description: "Описание — Markdown, списки, ссылки",
+        documentation: "Дополнительная документация",
+        readOnly: "только чтение",
+        invalidStructure: "Структура .rpad не распознана. Редактирование защищено."
+    }
+};
+function appLanguage() {
+    try {
+        // getLanguage() is public since Obsidian 1.8.7; older versions keep it in localStorage.
+        return obsidian.getLanguage?.() || globalThis.localStorage?.getItem("language") || "en";
+    } catch {
+        return "en";
+    }
+}
+function t(id) {
+    if (id in OBSIDIAN_KEYS) {
+        const [key, fallback] = OBSIDIAN_KEYS[id];
+        try {
+            const i18n = globalThis.i18next;
+            if (i18n?.exists?.(key)) return i18n.t(key);
+        } catch { /* fall through to the English fallback */ }
+        return fallback;
+    }
+    const language = appLanguage();
+    const table = STRINGS[language] || STRINGS[language.split("-")[0]] || STRINGS.en;
+    return table[id] ?? STRINGS.en[id];
+}
+
+class RunPadMarkdown extends Plugin {
     onload() {
         this.registerExtensions(["rpad"], "markdown");
         this.tracked = new Set();
@@ -175,24 +219,24 @@ module.exports = class RunPadMarkdown extends Plugin {
                         "data-placeholder": label
                     } }).range(line.from));
                 };
-                if (parts.title) reserveLine(parts.title.from, "Название", parts.title.empty, "title");
+                if (parts.title) reserveLine(parts.title.from, t("title"), parts.title.empty, "title");
                 else decorations.push(Decoration.widget({ block: true, side: -1,
-                    widget: new EmptySection("Название", parsed.locks[0].to,
+                    widget: new EmptySection(t("title"), parsed.locks[0].to,
                         "# " + eol + eol, 2) }).range(parsed.locks[0].to));
                 if (parts.intro.from < parts.intro.to) {
                     decorateTextBlock(parts.intro, "intro");
-                    reserveLine(parts.intro.from, "Описание — Markdown, списки, ссылки", parts.intro.empty, "intro");
+                    reserveLine(parts.intro.from, t("description"), parts.intro.empty, "intro");
                 } else {
                     decorations.push(Decoration.widget({ block: true, side: -1,
-                        widget: new EmptySection("Описание — Markdown, списки, ссылки", parts.intro.from, eol, 0)
+                        widget: new EmptySection(t("description"), parts.intro.from, eol, 0)
                     }).range(parts.intro.from));
                 }
                 if (parts.outro.from === state.doc.lineAt(parts.outro.from).from) {
                     decorateTextBlock(parts.outro, "outro");
-                    reserveLine(parts.outro.from, "Дополнительная документация", parts.outro.empty, "outro");
+                    reserveLine(parts.outro.from, t("documentation"), parts.outro.empty, "outro");
                 } else {
                     decorations.push(Decoration.widget({ block: true, side: 1,
-                        widget: new EmptySection("Дополнительная документация", text.length, eol, eol.length)
+                        widget: new EmptySection(t("documentation"), text.length, eol, eol.length)
                     }).range(text.length));
                 }
             }
@@ -271,9 +315,9 @@ module.exports = class RunPadMarkdown extends Plugin {
                 summary = root.ownerDocument.createElement("details");
                 summary.className = "runpad-properties";
                 summary.dataset.path = view.file.path;
-                summary.setAttribute("aria-label", "Свойства RunPad, только чтение");
+                summary.setAttribute("aria-label", "RunPad: " + t("properties") + ", " + t("readOnly"));
                 const heading = root.ownerDocument.createElement("summary");
-                heading.textContent = "Свойства";
+                heading.textContent = t("properties");
                 summary.append(heading, root.ownerDocument.createElement("div"));
             }
             // Keep the same element while editing so a user's expanded/collapsed state survives.
@@ -298,7 +342,7 @@ module.exports = class RunPadMarkdown extends Plugin {
             const content = summary.lastElementChild;
             content.replaceChildren();
             if (yaml === null) {
-                content.textContent = "Структура .rpad не распознана. Редактирование защищено.";
+                content.textContent = t("invalidStructure");
                 return;
             }
             try {
@@ -333,4 +377,7 @@ module.exports = class RunPadMarkdown extends Plugin {
         }
         this.tracked.clear();
     }
-};
+}
+module.exports = RunPadMarkdown;
+// Exposed for bundle.test.cjs; Obsidian only uses the default export.
+module.exports.localize = t;
