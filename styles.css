@@ -1,0 +1,57 @@
+/* Read-only properties replace Obsidian's editable widget only in .rpad documents. */
+.runpad-protected .metadata-container { display: none !important; }
+.runpad-properties { margin: 8px 0 8px; color: var(--text-normal); user-select: text; }
+.view-content > .runpad-properties { margin: 12px 24px; flex: 0 0 auto; }
+.runpad-properties > summary { cursor: pointer; font-size: var(--font-ui-medium);
+    font-weight: var(--font-medium); color: var(--text-muted); padding: 4px 0; }
+.runpad-properties table { width: 100%; border-collapse: collapse; margin: 8px 0 0;
+    font-size: var(--font-ui-small); background: transparent; }
+.runpad-properties th, .runpad-properties td { border: 0 !important; padding: 6px 12px;
+    text-align: start; vertical-align: top; background: transparent !important; }
+.runpad-properties th { width: 34%; color: var(--text-muted); font-weight: normal; }
+.runpad-properties td { white-space: pre-wrap; overflow-wrap: anywhere; }
+.runpad-properties pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; }
+
+/* Hide only delimiter glyphs. Keep Obsidian's native lines, padding, font and syntax. */
+.runpad-protected .runpad-fence-text,
+.runpad-protected .runpad-fence-text * { opacity: 0 !important; }
+
+/* Reserve writable Markdown space without serializing placeholder labels into the file. */
+.runpad-protected .cm-line.runpad-pinned-section { position: relative; }
+.runpad-protected .cm-line.runpad-section-title { margin-block: 0 !important; padding-top: 0 !important; }
+.runpad-protected .cm-line.runpad-section-empty { min-height: 36px; }
+.runpad-protected .cm-line.runpad-section-empty::after {
+    content: attr(data-placeholder); color: var(--text-faint); pointer-events: none;
+    font: var(--font-text-size) var(--font-text); opacity: 0.7;
+}
+.runpad-protected .runpad-section-placeholder {
+    display: block; width: 100%; min-height: 36px; margin: 6px 0; padding: 8px 0;
+    text-align: start; color: var(--text-faint); background: transparent;
+    border: 0; box-shadow: none;
+}
+
+/* Show the actual document heading once, rather than also displaying its file name. */
+.runpad-protected .inline-title { display: none !important; }
+
+/* Keep Markdown transparent; reserve border space to avoid jumps when editing. */
+.runpad-protected .cm-line.runpad-markdown-block {
+    background: transparent !important; border: 0; padding-inline: 0;
+}
+.runpad-protected .cm-line.runpad-block-first {
+    padding-top: 10px; border-top: 1px dashed transparent; border-radius: 0;
+}
+.runpad-protected .cm-line.runpad-block-last {
+    padding-bottom: 10px; border-bottom: 1px dashed transparent; border-radius: 0;
+}
+.runpad-protected .cm-editor.cm-focused .cm-content:has(.runpad-markdown-intro.cm-activeLine) .runpad-markdown-intro.runpad-block-first,
+.runpad-protected .cm-editor.cm-focused .cm-content:has(.runpad-markdown-outro.cm-activeLine) .runpad-markdown-outro.runpad-block-first {
+    border-top-color: var(--text-faint);
+}
+.runpad-protected .cm-editor.cm-focused .cm-content:has(.runpad-markdown-intro.cm-activeLine) .runpad-markdown-intro.runpad-block-last,
+.runpad-protected .cm-editor.cm-focused .cm-content:has(.runpad-markdown-outro.cm-activeLine) .runpad-markdown-outro.runpad-block-last {
+    border-bottom-color: var(--text-faint);
+}
+.runpad-protected .runpad-section-placeholder:focus-visible {
+    outline: none; border-top: 1px dashed var(--text-faint);
+    border-bottom: 1px dashed var(--text-faint);
+}

@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Obsidian vault data, if the repo is opened as a vault or symlinked into one
+.obsidian/
+data.json

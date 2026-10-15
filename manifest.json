@@ -1,0 +1,9 @@
+{
+    "id": "runpad-markdown",
+    "name": "RunPad Markdown",
+    "version": "0.3.4",
+    "minAppVersion": "1.4.0",
+    "description": "Open and edit RunPad .rpad files with the built-in Markdown view.",
+    "author": "Campforge",
+    "isDesktopOnly": false
+}
