@@ -1,4 +1,4 @@
-# RunPad Markdown 0.3.5
+# RunPad Markdown 0.3.6
 
 View your [RunPad](https://github.com/campforge/run-pad) scripts in Obsidian. The plugin opens
 `.rpad` files in Obsidian's own Markdown editor: the notes read as a normal note, the code shows
@@ -163,6 +163,11 @@ the document. The old minimum height of empty sections is gone. A missing sectio
 offered as a button with the same height as the line that clicking it creates; a missing
 title is now created as a single `# ` line, without an extra blank line.
 
+## Release archive (0.3.6)
+
+Each release now includes `runpad-markdown.zip` for manual installation: unpack it into
+`<vault>/.obsidian/plugins/`. The plugin itself is unchanged from 0.3.5.
+
 ## Development
 
 Requires Node.js 18+. There are no npm dependencies; `package.json` only holds scripts.
@@ -184,7 +189,7 @@ root because Obsidian's plugin directory reads the latest version from there.
    of truth; `build.cjs` no longer overwrites it.
 2. Run `npm test` and commit `manifest.json` and `versions.json`.
 3. Push a tag equal to the version, without a `v` prefix (Obsidian requires this):
-   `git tag 0.3.5 && git push origin main 0.3.5`.
+   `git tag 0.3.6 && git push origin main 0.3.6`.
    The **Release** workflow checks that the tag matches `manifest.json` and `versions.json`,
    builds, packages and tests, and publishes a GitHub release with `runpad-markdown.zip`
    and, separately, `main.js`, `manifest.json` and `styles.css` (the files Obsidian's plugin
