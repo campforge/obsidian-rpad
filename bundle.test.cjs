@@ -20,40 +20,37 @@ test('main.js loads standalone and exports the plugin class', () => {
  assert.ok(module.exports.prototype instanceof Plugin);
 });
 
-function loadBundle({ i18next, getLanguage, language } = {}) {
+function loadBundle(language = 'en') {
  const code = fs.readFileSync(path.join(__dirname, 'main.js'), 'utf8');
- const obsidian = { Plugin: class {}, MarkdownView: class {}, editorInfoField: {}, parseYaml: () => ({}) };
- if (getLanguage) obsidian.getLanguage = getLanguage;
+ const obsidian = { Plugin: class {}, MarkdownView: class {}, editorInfoField: {}, parseYaml: () => ({}),
+  getLanguage: () => language };
  const stubs = { obsidian, '@codemirror/state': {}, '@codemirror/view': { WidgetType: class {} } };
  const module = { exports: {} };
- const localStorage = { getItem: key => key === 'language' ? language ?? null : null };
- vm.runInNewContext(code, { module, exports: module.exports, require: name => stubs[name], queueMicrotask,
-  i18next, localStorage }, { filename: 'main.js' });
+ vm.runInNewContext(code, { module, exports: module.exports, require: name => stubs[name], queueMicrotask },
+  { filename: 'main.js' });
  return module.exports.localize;
 }
 
-test('Properties heading comes from Obsidian translations, then from our locales', () => {
- const i18next = { exists: key => key === 'properties.label-heading', t: () => 'Eigenschaften' };
- assert.equal(loadBundle({ i18next, getLanguage: () => 'de' })('properties.heading'), 'Eigenschaften');
- // No i18next (or it throws): our own file for the app language, then English.
- assert.equal(loadBundle({ getLanguage: () => 'ru' })('properties.heading'), 'Свойства');
- assert.equal(loadBundle()('properties.heading'), 'Properties');
- const broken = { exists: () => { throw new Error('boom'); } };
- assert.equal(loadBundle({ i18next: broken, getLanguage: () => 'ru' })('properties.heading'), 'Свойства');
+test('strings follow the Obsidian language', () => {
+ assert.equal(loadBundle('ru')('properties.heading'), 'Свойства');
+ assert.equal(loadBundle('de')('properties.heading'), 'Eigenschaften');
+ assert.equal(loadBundle('zh-TW')('placeholder.title'), '標題');
+ assert.equal(loadBundle('zh')('placeholder.title'), '标题');
+ assert.equal(loadBundle('pt-BR')('properties.read-only'), 'somente leitura');
+ assert.equal(loadBundle('pt')('properties.read-only'), 'só de leitura');
 });
 
-test('plugin strings follow the Obsidian language, defaulting to English', () => {
- assert.equal(loadBundle({ getLanguage: () => 'ru' })('placeholder.title'), 'Название');
- assert.equal(loadBundle({ getLanguage: () => 'en-GB' })('placeholder.title'), 'Title');
- assert.equal(loadBundle({ getLanguage: () => 'pt-BR' })('placeholder.description'), 'Description — Markdown, lists, links');
- // Obsidian before 1.8.7 has no getLanguage(); the language is in localStorage.
- assert.equal(loadBundle({ language: 'ru' })('placeholder.documentation'), 'Дополнительная документация');
- assert.equal(loadBundle()('missing.key'), 'missing.key');
+test('regional and unknown languages fall back to the base language, then English', () => {
+ assert.equal(loadBundle('en-GB')('placeholder.title'), 'Title');
+ assert.equal(loadBundle('de-AT')('placeholder.title'), 'Titel');
+ assert.equal(loadBundle('kk')('placeholder.title'), 'Title');
+ assert.equal(loadBundle('ru')('missing.key'), 'missing.key');
 });
 
 test('placeholders are interpolated', () => {
- const t = loadBundle({ getLanguage: () => 'ru' });
- assert.equal(t('properties.aria-label', { heading: 'Свойства', readOnly: 'только чтение' }), 'RunPad: Свойства, только чтение');
+ const t = loadBundle('ru');
+ assert.equal(t('properties.aria-label', { heading: 'Свойства', readOnly: 'только для чтения' }),
+  'RunPad: Свойства, только для чтения');
  assert.equal(t('properties.aria-label', { heading: 'X' }), 'RunPad: X, {{readOnly}}');
 });
 

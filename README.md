@@ -1,4 +1,4 @@
-# RunPad Markdown 0.3.4
+# RunPad Markdown 0.3.5
 
 An Obsidian plugin that opens `.rpad` files in the built-in Markdown view.
 
@@ -9,7 +9,7 @@ An Obsidian plugin that opens `.rpad` files in the built-in Markdown view.
 2. Restart Obsidian, or disable and re-enable RunPad Markdown in Community plugins.
 3. If needed, enable Files and links → Detect all file extensions.
 
-Requires Obsidian 1.4+. No build step or dependency installation is needed.
+Requires Obsidian 1.8.7+. No build step or dependency installation is needed.
 
 ## What is editable
 
@@ -33,8 +33,7 @@ the delimiters are not hidden, so the problem stays visible.
 - Adding a second run block or closing the first one early.
 
 Obsidian's built-in editable Properties form is replaced with a "name — value" table
-under a **Properties** heading. The heading is taken from Obsidian's own translation
-(`properties.label-heading`), so it matches the app language; English is the fallback. The table is read-only; values can be selected
+under a **Properties** heading, shown in the app language (see [Interface language](#interface-language)). The table is read-only; values can be selected
 and copied. The section is collapsed by default and expands on click or via the keyboard.
 Its state is kept while editing the current tab; when another file is opened,
 the section is collapsed again. Pop-up notices about forbidden edits have been removed:
@@ -51,18 +50,23 @@ modify the file. Remote sync changes are not rolled back. Regular `.md` files ar
 
 ## Interface language
 
-Interface strings are translated with per-language files in `src/locales/`
-(`en.json` is the reference and the fallback; `ru.json` is included). The language follows
-Obsidian → Settings → General → Language; an unknown language falls back to English.
-The Properties heading is first taken from Obsidian's own translation
-(`properties.label-heading`), so it matches the native Properties block in every app
-language, and only then from our locale files.
+The interface follows Obsidian → Settings → General → Language. The plugin reads it with
+the public `getLanguage()` API and looks up its own translation in `src/locales/`:
+the exact code first (`pt-BR`, `zh-TW`), then the base language (`en-GB` → `en`),
+then English. No Obsidian internals are used.
+
+Included: English, Русский, Українська, Deutsch, Français, Español, Italiano,
+Português, Português (Brasil), Polski, Türkçe, Nederlands, 日本語, 한국어,
+简体中文, 繁體中文. The word for "Properties" in each file is the one Obsidian itself uses
+for its Properties block (from
+[obsidian-translations](https://github.com/obsidianmd/obsidian-translations)), so the
+heading matches the native UI. Other strings were translated for this plugin; corrections
+from native speakers are welcome.
 
 To add a language:
 
 1. Copy `src/locales/en.json` to `src/locales/<code>.json`, using the code Obsidian uses
-   (`de`, `pt-BR`, `zh-TW`, … — see
-   [obsidian-translations](https://github.com/obsidianmd/obsidian-translations#existing-languages)).
+   (see [existing languages](https://github.com/obsidianmd/obsidian-translations#existing-languages)).
 2. Translate the values; keep the keys and `{{placeholders}}` unchanged.
 3. Run `npm run build && npm test`. `i18n.test.cjs` fails if a key is missing, extra
    or empty, or a placeholder differs from `en.json`.
@@ -128,6 +132,12 @@ The description and documentation stay transparent while typing. The active text
 gets dashed borders at the top and bottom, without a side border. Padding inside the section
 is 10 px at the top/bottom. Space for the lines is reserved, so focus does not change the height.
 The background/highlighting of the executable code is not affected. Live visual testing has not been done.
+
+## Localization (0.3.5)
+
+Interface strings are no longer hardcoded in Russian: the plugin follows the Obsidian
+language and ships 16 translations. Because it relies on the public `getLanguage()`
+API, the minimum Obsidian version is now 1.8.7.
 
 ## Development
 

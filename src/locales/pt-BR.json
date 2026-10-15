@@ -1,0 +1,9 @@
+{
+    "properties.heading": "Propriedades",
+    "properties.read-only": "somente leitura",
+    "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+    "placeholder.title": "Título",
+    "placeholder.description": "Descrição — Markdown, listas, links",
+    "placeholder.documentation": "Documentação adicional",
+    "notice.invalid-structure": "A estrutura .rpad não foi reconhecida. A edição está bloqueada."
+}

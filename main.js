@@ -119,11 +119,21 @@ return { inspect, canChange, fenceTextRanges, sections, documentationCodeBlocks 
 })();
 const { t } = (() => { const module = { exports: {} }; const exports = module.exports;
 "use strict";
-// Plugin localization. Translations live in src/locales/<language>.json; build.cjs embeds
-// them into the constant below at build time, so the plugin has no runtime file access or deps.
-// en.json is the reference: every key must exist there and is the fallback for others.
-const obsidian = require("obsidian");
+// Plugin localization. Translations live in src/locales/<language>.json, named with the
+// language codes Obsidian uses (https://github.com/obsidianmd/obsidian-translations).
+// build.cjs embeds them into the constant below, so there are no runtime file reads.
+// en.json is the reference: every key must exist there, and it is the final fallback.
+const { getLanguage } = require("obsidian");
 const locales = {
+    "de": {
+        "properties.heading": "Eigenschaften",
+        "properties.read-only": "schreibgeschützt",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Titel",
+        "placeholder.description": "Beschreibung – Markdown, Listen, Links",
+        "placeholder.documentation": "Zusätzliche Dokumentation",
+        "notice.invalid-structure": "Die .rpad-Struktur wurde nicht erkannt. Die Bearbeitung ist gesperrt."
+    },
     "en": {
         "properties.heading": "Properties",
         "properties.read-only": "read-only",
@@ -133,50 +143,149 @@ const locales = {
         "placeholder.documentation": "Additional documentation",
         "notice.invalid-structure": "The .rpad structure was not recognized. Editing is locked."
     },
+    "es": {
+        "properties.heading": "Propiedades",
+        "properties.read-only": "solo lectura",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Título",
+        "placeholder.description": "Descripción — Markdown, listas, enlaces",
+        "placeholder.documentation": "Documentación adicional",
+        "notice.invalid-structure": "No se reconoció la estructura .rpad. La edición está bloqueada."
+    },
+    "fr": {
+        "properties.heading": "Propriétés",
+        "properties.read-only": "lecture seule",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Titre",
+        "placeholder.description": "Description — Markdown, listes, liens",
+        "placeholder.documentation": "Documentation supplémentaire",
+        "notice.invalid-structure": "La structure .rpad n’a pas été reconnue. La modification est verrouillée."
+    },
+    "it": {
+        "properties.heading": "Proprietà",
+        "properties.read-only": "sola lettura",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Titolo",
+        "placeholder.description": "Descrizione — Markdown, elenchi, link",
+        "placeholder.documentation": "Documentazione aggiuntiva",
+        "notice.invalid-structure": "Struttura .rpad non riconosciuta. La modifica è bloccata."
+    },
+    "ja": {
+        "properties.heading": "プロパティ",
+        "properties.read-only": "読み取り専用",
+        "properties.aria-label": "RunPad: {{heading}}、{{readOnly}}",
+        "placeholder.title": "タイトル",
+        "placeholder.description": "説明 — Markdown、リスト、リンク",
+        "placeholder.documentation": "追加ドキュメント",
+        "notice.invalid-structure": ".rpad の構造を認識できませんでした。編集はロックされています。"
+    },
+    "ko": {
+        "properties.heading": "속성",
+        "properties.read-only": "읽기 전용",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "제목",
+        "placeholder.description": "설명 — Markdown, 목록, 링크",
+        "placeholder.documentation": "추가 문서",
+        "notice.invalid-structure": ".rpad 구조를 인식할 수 없습니다. 편집이 잠겨 있습니다."
+    },
+    "nl": {
+        "properties.heading": "Eigenschappen",
+        "properties.read-only": "alleen-lezen",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Titel",
+        "placeholder.description": "Beschrijving — Markdown, lijsten, links",
+        "placeholder.documentation": "Aanvullende documentatie",
+        "notice.invalid-structure": "De .rpad-structuur is niet herkend. Bewerken is vergrendeld."
+    },
+    "pl": {
+        "properties.heading": "Atrybuty",
+        "properties.read-only": "tylko do odczytu",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Tytuł",
+        "placeholder.description": "Opis — Markdown, listy, linki",
+        "placeholder.documentation": "Dodatkowa dokumentacja",
+        "notice.invalid-structure": "Nie rozpoznano struktury pliku .rpad. Edycja jest zablokowana."
+    },
+    "pt-BR": {
+        "properties.heading": "Propriedades",
+        "properties.read-only": "somente leitura",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Título",
+        "placeholder.description": "Descrição — Markdown, listas, links",
+        "placeholder.documentation": "Documentação adicional",
+        "notice.invalid-structure": "A estrutura .rpad não foi reconhecida. A edição está bloqueada."
+    },
+    "pt": {
+        "properties.heading": "Propriedades",
+        "properties.read-only": "só de leitura",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Título",
+        "placeholder.description": "Descrição — Markdown, listas, ligações",
+        "placeholder.documentation": "Documentação adicional",
+        "notice.invalid-structure": "A estrutura .rpad não foi reconhecida. A edição está bloqueada."
+    },
     "ru": {
         "properties.heading": "Свойства",
-        "properties.read-only": "только чтение",
+        "properties.read-only": "только для чтения",
         "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
         "placeholder.title": "Название",
         "placeholder.description": "Описание — Markdown, списки, ссылки",
         "placeholder.documentation": "Дополнительная документация",
-        "notice.invalid-structure": "Структура .rpad не распознана. Редактирование защищено."
+        "notice.invalid-structure": "Структура .rpad не распознана. Редактирование заблокировано."
+    },
+    "tr": {
+        "properties.heading": "Özellikler",
+        "properties.read-only": "salt okunur",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Başlık",
+        "placeholder.description": "Açıklama — Markdown, listeler, bağlantılar",
+        "placeholder.documentation": "Ek belgeler",
+        "notice.invalid-structure": ".rpad yapısı tanınmadı. Düzenleme kilitli."
+    },
+    "uk": {
+        "properties.heading": "Властивості",
+        "properties.read-only": "тільки читання",
+        "properties.aria-label": "RunPad: {{heading}}, {{readOnly}}",
+        "placeholder.title": "Назва",
+        "placeholder.description": "Опис — Markdown, списки, посилання",
+        "placeholder.documentation": "Додаткова документація",
+        "notice.invalid-structure": "Структуру .rpad не розпізнано. Редагування заблоковано."
+    },
+    "zh-TW": {
+        "properties.heading": "屬性",
+        "properties.read-only": "唯讀",
+        "properties.aria-label": "RunPad：{{heading}}，{{readOnly}}",
+        "placeholder.title": "標題",
+        "placeholder.description": "描述 — Markdown、清單、連結",
+        "placeholder.documentation": "附加文件",
+        "notice.invalid-structure": "無法辨識 .rpad 結構。編輯已鎖定。"
+    },
+    "zh": {
+        "properties.heading": "笔记属性",
+        "properties.read-only": "只读",
+        "properties.aria-label": "RunPad：{{heading}}，{{readOnly}}",
+        "placeholder.title": "标题",
+        "placeholder.description": "描述 — Markdown、列表、链接",
+        "placeholder.documentation": "附加文档",
+        "notice.invalid-structure": "无法识别 .rpad 结构。编辑已锁定。"
     }
 };
 
-// Keys whose text Obsidian itself already translates. Using Obsidian's string keeps the
-// heading identical to the native Properties block in every app language. i18next is a
-// runtime global, not a public API, so our own locale files remain the fallback.
-const OBSIDIAN_KEYS = { "properties.heading": "properties.label-heading" };
-
-function language() {
-    try {
-        // getLanguage() is public since Obsidian 1.8.7; older versions keep it in localStorage.
-        return obsidian.getLanguage?.() || globalThis.localStorage?.getItem("language") || "en";
-    } catch {
-        return "en";
-    }
-}
-
-function fromObsidian(key) {
-    const obsidianKey = OBSIDIAN_KEYS[key];
-    if (!obsidianKey) return undefined;
-    try {
-        const i18n = globalThis.i18next;
-        if (i18n?.exists?.(obsidianKey)) return i18n.t(obsidianKey);
-    } catch { /* use our own translation */ }
-    return undefined;
+// Resolve Obsidian's language to one of our locales: exact code ("pt-BR", "zh-TW"),
+// then its base language ("en-GB" -> "en"), then English.
+function resolveLocale(code) {
+    if (locales[code]) return code;
+    const base = String(code).split("-")[0];
+    return locales[base] ? base : "en";
 }
 
 // t("placeholder.title"); t("properties.aria-label", { heading, readOnly }) fills {{name}}.
 function t(key, params = {}) {
-    const code = language();
-    const table = locales[code] || locales[code.split("-")[0]] || locales.en;
-    const text = fromObsidian(key) ?? table[key] ?? locales.en[key] ?? key;
+    const text = locales[resolveLocale(getLanguage())][key] ?? locales.en[key] ?? key;
     return text.replace(/\{\{(\w+)\}\}/g, (match, name) => name in params ? String(params[name]) : match);
 }
 
-module.exports = { t, language, locales };
+module.exports = { t, resolveLocale };
 
 return module.exports; })();
 

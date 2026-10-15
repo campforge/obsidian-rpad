@@ -1,40 +1,23 @@
 "use strict";
-// Plugin localization. Translations live in src/locales/<language>.json; build.cjs embeds
-// them into the constant below at build time, so the plugin has no runtime file access or deps.
-// en.json is the reference: every key must exist there and is the fallback for others.
-const obsidian = require("obsidian");
+// Plugin localization. Translations live in src/locales/<language>.json, named with the
+// language codes Obsidian uses (https://github.com/obsidianmd/obsidian-translations).
+// build.cjs embeds them into the constant below, so there are no runtime file reads.
+// en.json is the reference: every key must exist there, and it is the final fallback.
+const { getLanguage } = require("obsidian");
 const locales = LOCALES_IMPLEMENTATION;
 
-// Keys whose text Obsidian itself already translates. Using Obsidian's string keeps the
-// heading identical to the native Properties block in every app language. i18next is a
-// runtime global, not a public API, so our own locale files remain the fallback.
-const OBSIDIAN_KEYS = { "properties.heading": "properties.label-heading" };
-
-function language() {
-    try {
-        // getLanguage() is public since Obsidian 1.8.7; older versions keep it in localStorage.
-        return obsidian.getLanguage?.() || globalThis.localStorage?.getItem("language") || "en";
-    } catch {
-        return "en";
-    }
-}
-
-function fromObsidian(key) {
-    const obsidianKey = OBSIDIAN_KEYS[key];
-    if (!obsidianKey) return undefined;
-    try {
-        const i18n = globalThis.i18next;
-        if (i18n?.exists?.(obsidianKey)) return i18n.t(obsidianKey);
-    } catch { /* use our own translation */ }
-    return undefined;
+// Resolve Obsidian's language to one of our locales: exact code ("pt-BR", "zh-TW"),
+// then its base language ("en-GB" -> "en"), then English.
+function resolveLocale(code) {
+    if (locales[code]) return code;
+    const base = String(code).split("-")[0];
+    return locales[base] ? base : "en";
 }
 
 // t("placeholder.title"); t("properties.aria-label", { heading, readOnly }) fills {{name}}.
 function t(key, params = {}) {
-    const code = language();
-    const table = locales[code] || locales[code.split("-")[0]] || locales.en;
-    const text = fromObsidian(key) ?? table[key] ?? locales.en[key] ?? key;
+    const text = locales[resolveLocale(getLanguage())][key] ?? locales.en[key] ?? key;
     return text.replace(/\{\{(\w+)\}\}/g, (match, name) => name in params ? String(params[name]) : match);
 }
 
-module.exports = { t, language, locales };
+module.exports = { t, resolveLocale };
