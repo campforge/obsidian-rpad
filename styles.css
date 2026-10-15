@@ -16,18 +16,34 @@
 .runpad-protected .runpad-fence-text,
 .runpad-protected .runpad-fence-text * { opacity: 0 !important; }
 
-/* Reserve writable Markdown space without serializing placeholder labels into the file. */
-.runpad-protected .cm-line.runpad-pinned-section { position: relative; }
+/* Placeholders behave like HTML input placeholders: shown inline where the text will go,
+   the caret stays before them, they add no height and are never saved to the file. */
 .runpad-protected .cm-line.runpad-section-title { margin-block: 0 !important; padding-top: 0 !important; }
-.runpad-protected .cm-line.runpad-section-empty { min-height: 36px; }
-.runpad-protected .cm-line.runpad-section-empty::after {
-    content: attr(data-placeholder); color: var(--text-faint); pointer-events: none;
-    font: var(--font-text-size) var(--font-text); opacity: 0.7;
+.runpad-protected .runpad-placeholder {
+    /* Same approach as CodeMirror's own placeholder. No overflow clipping: it would move
+       the inline-block baseline and change the height of heading lines. */
+    display: inline-block; vertical-align: top;
+    color: var(--text-faint); pointer-events: none; user-select: none;
 }
+/* CodeMirror puts a zero-width 1em "widget buffer" next to inline widgets, aligned to
+   text-top; in a large heading font it sticks out below the line and adds height. */
+.runpad-protected .cm-line.runpad-section-empty > .cm-widgetBuffer { vertical-align: top; }
+
+/* A missing section is offered as a button with the metrics of the line a click creates,
+   so the layout does not move when the section appears. */
 .runpad-protected .runpad-section-placeholder {
-    display: block; width: 100%; min-height: 36px; margin: 6px 0; padding: 8px 0;
-    text-align: start; color: var(--text-faint); background: transparent;
-    border: 0; box-shadow: none;
+    all: unset; box-sizing: border-box; display: block; width: 100%; cursor: text;
+    font-family: var(--font-text); font-size: var(--font-text-size);
+    line-height: var(--line-height-normal);
+}
+.runpad-protected .runpad-section-placeholder-title {
+    font-family: var(--h1-font); font-size: var(--h1-size); font-weight: var(--h1-weight);
+    line-height: var(--h1-line-height);
+}
+.runpad-protected .runpad-section-placeholder-intro,
+.runpad-protected .runpad-section-placeholder-outro {
+    /* Same reserved padding and border as .runpad-block-first / .runpad-block-last. */
+    padding-block: 10px; border-block: 1px dashed transparent;
 }
 
 /* Show the actual document heading once, rather than also displaying its file name. */
@@ -51,7 +67,6 @@
 .runpad-protected .cm-editor.cm-focused .cm-content:has(.runpad-markdown-outro.cm-activeLine) .runpad-markdown-outro.runpad-block-last {
     border-bottom-color: var(--text-faint);
 }
-.runpad-protected .runpad-section-placeholder:focus-visible {
-    outline: none; border-top: 1px dashed var(--text-faint);
-    border-bottom: 1px dashed var(--text-faint);
-}
+/* Keyboard focus only recolours the already reserved border, so nothing shifts. */
+.runpad-protected .runpad-section-placeholder:focus-visible { border-block-color: var(--text-faint); }
+.runpad-protected .runpad-section-placeholder-title:focus-visible { outline: 1px dashed var(--text-faint); }

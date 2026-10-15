@@ -297,15 +297,23 @@ class RunPadMarkdown extends Plugin {
         // Preserve native code-block line layout. Replacing whole fence lines merges visual
         // lines and disrupts Obsidian's first-code-line styling, padding and font selection.
         class EmptySection extends WidgetType {
-            constructor(label, position, text, caretOffset) {
-                super(); Object.assign(this, { label, position, text, caretOffset });
+            constructor(label, position, text, caretOffset, kind) {
+                super(); Object.assign(this, { label, position, text, caretOffset, kind });
             }
-            eq(other) { return this.label === other.label && this.position === other.position; }
+            eq(other) {
+                return this.label === other.label && this.position === other.position
+                    && this.text === other.text && this.kind === other.kind;
+            }
             toDOM(view) {
+                // Rendered with the same metrics as the line the click creates, so the
+                // document does not jump when the section appears.
                 const button = view.dom.ownerDocument.createElement("button");
-                button.className = "runpad-section-placeholder";
-                button.textContent = this.label;
+                button.className = "runpad-section-placeholder runpad-section-placeholder-" + this.kind;
                 button.type = "button";
+                const label = view.dom.ownerDocument.createElement("span");
+                label.className = "runpad-placeholder";
+                label.textContent = this.label;
+                button.append(label);
                 button.addEventListener("click", () => {
                     view.dispatch({ changes: { from: this.position, insert: this.text },
                         selection: { anchor: this.position + this.caretOffset },
@@ -315,6 +323,22 @@ class RunPadMarkdown extends Plugin {
                 return button;
             }
             ignoreEvent() { return true; }
+        }
+        // Inline hint inside an empty line, like an HTML input placeholder: it sits where the
+        // text will appear, the caret stays before it, it takes no extra height, and it is
+        // gone as soon as the line has content. Never part of the document text.
+        class Placeholder extends WidgetType {
+            constructor(label) { super(); this.label = label; }
+            eq(other) { return this.label === other.label; }
+            toDOM(view) {
+                const span = view.dom.ownerDocument.createElement("span");
+                span.className = "runpad-placeholder";
+                span.setAttribute("aria-hidden", "true");
+                span.textContent = this.label;
+                return span;
+            }
+            // Let clicks fall through to the editor so they place the caret on the line.
+            ignoreEvent() { return false; }
         }
         const fenceDecorations = state => {
             const info = state.field(editorInfoField, false);
@@ -339,31 +363,37 @@ class RunPadMarkdown extends Plugin {
                         } }).range(line.from));
                     }
                 };
-                const reserveLine = (position, label, empty, kind) => {
+                // placeholderAt: where the hint goes when the section is empty (end of the
+                // line's existing whitespace / after "# "), or null when it has content.
+                const reserveLine = (position, label, placeholderAt, kind) => {
                     const line = state.doc.lineAt(position);
                     decorations.push(Decoration.line({ attributes: {
-                        class: "runpad-pinned-section runpad-section-" + kind + (empty ? " runpad-section-empty" : ""),
-                        "data-placeholder": label
+                        class: "runpad-pinned-section runpad-section-" + kind
+                            + (placeholderAt !== null ? " runpad-section-empty" : "")
                     } }).range(line.from));
+                    if (placeholderAt !== null) decorations.push(Decoration.widget({
+                        widget: new Placeholder(label), side: 1 }).range(placeholderAt));
                 };
-                if (parts.title) reserveLine(parts.title.from, t("placeholder.title"), parts.title.empty, "title");
+                const emptyLineEnd = part => part.empty ? state.doc.lineAt(part.from).to : null;
+                if (parts.title) reserveLine(parts.title.from, t("placeholder.title"),
+                    parts.title.empty ? parts.title.contentTo : null, "title");
                 else decorations.push(Decoration.widget({ block: true, side: -1,
                     widget: new EmptySection(t("placeholder.title"), parsed.locks[0].to,
-                        "# " + eol + eol, 2) }).range(parsed.locks[0].to));
+                        "# " + eol, 2, "title") }).range(parsed.locks[0].to));
                 if (parts.intro.from < parts.intro.to) {
                     decorateTextBlock(parts.intro, "intro");
-                    reserveLine(parts.intro.from, t("placeholder.description"), parts.intro.empty, "intro");
+                    reserveLine(parts.intro.from, t("placeholder.description"), emptyLineEnd(parts.intro), "intro");
                 } else {
                     decorations.push(Decoration.widget({ block: true, side: -1,
-                        widget: new EmptySection(t("placeholder.description"), parts.intro.from, eol, 0)
+                        widget: new EmptySection(t("placeholder.description"), parts.intro.from, eol, 0, "intro")
                     }).range(parts.intro.from));
                 }
                 if (parts.outro.from === state.doc.lineAt(parts.outro.from).from) {
                     decorateTextBlock(parts.outro, "outro");
-                    reserveLine(parts.outro.from, t("placeholder.documentation"), parts.outro.empty, "outro");
+                    reserveLine(parts.outro.from, t("placeholder.documentation"), emptyLineEnd(parts.outro), "outro");
                 } else {
                     decorations.push(Decoration.widget({ block: true, side: 1,
-                        widget: new EmptySection(t("placeholder.documentation"), text.length, eol, eol.length)
+                        widget: new EmptySection(t("placeholder.documentation"), text.length, eol, eol.length, "outro")
                     }).range(text.length));
                 }
             }

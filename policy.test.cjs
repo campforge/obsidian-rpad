@@ -122,3 +122,9 @@ test('precomputed inspect result gives the same sections and ranges', () => {
  assert.deepEqual(fenceTextRanges(doc,parsed),fenceTextRanges(doc));
  assert.deepEqual(documentationCodeBlocks(doc,parsed),documentationCodeBlocks(doc));
 });
+test('a missing title can be created as a single heading line', () => {
+ const text=doc.replace('# Title\n\n','');
+ const at=inspect(text).locks[0].to;
+ assert.ok(edit(text,at,at,'# \n'));
+ assert.ok(edit(text.replaceAll('\n','\r\n'),inspect(text.replaceAll('\n','\r\n')).locks[0].to,inspect(text.replaceAll('\n','\r\n')).locks[0].to,'# \r\n'));
+});

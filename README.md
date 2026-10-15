@@ -93,7 +93,7 @@ CodeMirror filter: https://codemirror.net/docs/ref/#state.EditorState.changeFilt
 
 The editor provides a title, a description before the run block and additional
 documentation after it. Their contents can be cleared; the heading marker and the description's
-separator line are protected. Empty sections have a minimum height and a placeholder.
+separator line are protected. Empty sections show a placeholder (see 0.3.5).
 Placeholders are not saved to the file. If an older file has no title/description slot,
 an empty-section button appears: clicking it creates plain Markdown, with no new format tags.
 Empty editor placeholders are not shown in Reading view.
@@ -133,11 +133,18 @@ gets dashed borders at the top and bottom, without a side border. Padding inside
 is 10 px at the top/bottom. Space for the lines is reserved, so focus does not change the height.
 The background/highlighting of the executable code is not affected. Live visual testing has not been done.
 
-## Localization (0.3.5)
+## Localization and placeholders (0.3.5)
 
 Interface strings are no longer hardcoded in Russian: the plugin follows the Obsidian
 language and ships 16 translations. Because it relies on the public `getLanguage()`
 API, the minimum Obsidian version is now 1.8.7.
+
+Placeholders now behave like HTML input placeholders: the hint is shown inline exactly
+where the text will appear (after `# ` for the title), the caret stays before it, it adds
+no height, and it disappears with the first typed character without moving the rest of
+the document. The old minimum height of empty sections is gone. A missing section is
+offered as a button with the same height as the line that clicking it creates; a missing
+title is now created as a single `# ` line, without an extra blank line.
 
 ## Development
 
